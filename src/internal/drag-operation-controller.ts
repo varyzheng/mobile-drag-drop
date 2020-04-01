@@ -49,23 +49,27 @@ export class DragOperationController {
 
     private _currentDragOperation:string;    // the current drag operation set according to the d'n'd processing model
 
-    private _initialTouch:Touch;  // the identifier for the touch that initiated the drag operation
+    private _initialTouch:Touch|MouseEvent;  // the identifier for the touch that initiated the drag operation
     private _touchMoveHandler:EventListener;
     private _touchEndOrCancelHandler:EventListener;
-    private _lastTouchEvent:TouchEvent;
+    private _lastTouchEvent:TouchEvent|MouseEvent;
 
     private _iterationLock:boolean;
     private _iterationIntervalId:number;
 
-    constructor( private _initialEvent:TouchEvent,
+    constructor( private _initialEvent:TouchEvent|MouseEvent,
                  private _config:Config,
                  private _sourceNode:HTMLElement,
-                 private _dragOperationEndedCb:( config:Config, event:TouchEvent, state:DragOperationState ) => void ) {
+                 private _dragOperationEndedCb:( config:Config, event:TouchEvent|MouseEvent, state:DragOperationState ) => void ) {
 
         console.log( "dnd-poly: setting up potential drag operation.." );
 
         this._lastTouchEvent = _initialEvent;
-        this._initialTouch = _initialEvent.changedTouches[ 0 ];
+        if (_initialEvent instanceof TouchEvent) {
+            this._initialTouch = _initialEvent.changedTouches[ 0 ];
+        } else {
+            this._initialTouch = _initialEvent;
+        }
 
         // create bound event listeners
         this._touchMoveHandler = this._onTouchMove.bind( this );
@@ -73,6 +77,8 @@ export class DragOperationController {
         addDocumentListener( "touchmove", this._touchMoveHandler, false );
         addDocumentListener( "touchend", this._touchEndOrCancelHandler, false );
         addDocumentListener( "touchcancel", this._touchEndOrCancelHandler, false );
+        addDocumentListener( "mousemove", this._touchMoveHandler, false );
+        addDocumentListener( "mouseup", this._touchEndOrCancelHandler, false );
 
         // the only thing we do is setup the touch listeners. if drag will really start is decided in touch move handler.
 
@@ -257,6 +263,8 @@ export class DragOperationController {
         removeDocumentListener( "touchmove", this._touchMoveHandler );
         removeDocumentListener( "touchend", this._touchEndOrCancelHandler );
         removeDocumentListener( "touchcancel", this._touchEndOrCancelHandler );
+        removeDocumentListener( "mousemove", this._touchMoveHandler );
+        removeDocumentListener( "mouseup", this._touchEndOrCancelHandler );
 
         if( this._dragImage ) {
             this._dragImage.parentNode.removeChild( this._dragImage );
@@ -273,8 +281,10 @@ export class DragOperationController {
     private _onTouchMove( event:TouchEvent ) {
 
         // filter unrelated touches
-        if( isTouchIdentifierContainedInTouchEvent( event, this._initialTouch.identifier ) === false ) {
-            return;
+        if (this._initialTouch instanceof Touch && event instanceof TouchEvent) {
+            if( isTouchIdentifierContainedInTouchEvent( event, this._initialTouch.identifier ) === false ) {
+                return;
+            }
         }
 
         // update the reference to the last received touch event
@@ -299,7 +309,11 @@ export class DragOperationController {
             else {
 
                 // by default only allow a single moving finger to initiate a drag operation
-                startDrag = (event.touches.length === 1);
+                if (event.touches) {
+                    startDrag = (event.touches.length === 1);
+                } else {
+                    startDrag = true;
+                }
             }
 
             if( !startDrag ) {
@@ -380,8 +394,10 @@ export class DragOperationController {
     private _onTouchEndOrCancel( event:TouchEvent ) {
 
         // filter unrelated touches
-        if( isTouchIdentifierContainedInTouchEvent( event, this._initialTouch.identifier ) === false ) {
-            return;
+        if (this._initialTouch instanceof Touch) {
+            if( isTouchIdentifierContainedInTouchEvent( event, this._initialTouch.identifier ) === false ) {
+                return;
+            }
         }
 
         // let the dragImageTranslateOverride know that its over

@@ -112,7 +112,12 @@ export function isTouchIdentifierContainedInTouchEvent( touchEvent:TouchEvent, t
  * Calc center of polygon spanned by multiple touches in page (full page size, with hidden scrollable area) coordinates
  * or in viewport (screen coordinates) coordinates.
  */
-export function updateCentroidCoordinatesOfTouchesIn( coordinateProp:"page" | "client", event:TouchEvent, outPoint:Point ):void {
+export function updateCentroidCoordinatesOfTouchesIn( coordinateProp:"page" | "client", event:TouchEvent|MouseEvent, outPoint:Point ):void {
+    if (event instanceof MouseEvent) {
+        outPoint.x = event.pageX;
+        outPoint.y = event.pageY;
+        return
+    }
     const pageXs:Array<number> = [], pageYs:Array<number> = [];
     for( let i = 0; i < event.touches.length; i++ ) {
         const touch = event.touches[ i ];

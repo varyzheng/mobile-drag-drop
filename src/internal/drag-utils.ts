@@ -82,14 +82,20 @@ export function determineDropEffect( effectAllowed:string, sourceNode:Element ) 
 }
 
 function createDragEventFromTouch( targetElement:Element,
-                                   e:TouchEvent,
+                                   e:TouchEvent|MouseEvent,
                                    type:string,
                                    cancelable:boolean,
                                    window:Window,
                                    dataTransfer:DataTransfer,
                                    relatedTarget:Element = null ) {
 
-    const touch:Touch = e.changedTouches[ 0 ];
+    // const touch:Touch|MouseEvent = e.changedTouches ? e.changedTouches[ 0 ] : e;
+    let touch:Touch|MouseEvent
+    if (e instanceof TouchEvent) {
+        touch = e.changedTouches[ 0 ]
+    } else {
+        touch = e
+    }
 
     const dndEvent:DragEvent = new Event( type, {
         bubbles: true,
@@ -120,7 +126,7 @@ function createDragEventFromTouch( targetElement:Element,
  */
 export function dispatchDragEvent( dragEvent:string,
                                    targetElement:Element,
-                                   touchEvent:TouchEvent,
+                                   touchEvent:TouchEvent|MouseEvent,
                                    dataStore:DragDataStore,
                                    dataTransfer:DataTransfer,
                                    cancelable:boolean = true,

@@ -63,6 +63,8 @@ function onDelayTouchstart( evt:TouchEvent ) {
         end.off();
         cancel.off();
         move.off();
+        mouseMove.off();
+        mouseUp.off();
         scroll.off();
         onTouchstart( evt );
     };
@@ -74,6 +76,8 @@ function onDelayTouchstart( evt:TouchEvent ) {
         end.off();
         cancel.off();
         move.off();
+        mouseMove.off();
+        mouseUp.off();
         scroll.off();
 
         if (el) {
@@ -92,6 +96,8 @@ function onDelayTouchstart( evt:TouchEvent ) {
     const end = onEvt( el, "touchend", onReleasedItem );
     const cancel = onEvt( el, "touchcancel", onReleasedItem );
     const move = onEvt( el, "touchmove", onReleasedItem );
+    const mouseMove = onEvt( el, "mousemove", onReleasedItem );
+    const mouseUp = onEvt( el, "mouseup", onReleasedItem );
     // scroll events don't bubble, only way to listen to scroll events
     // that are about to happen in nested scrollables is by listening in capture phase
     const scroll = onEvt( window, "scroll", onReleasedItem, true );
@@ -209,12 +215,12 @@ export function polyfill( override?:Config ):boolean {
         // }
 
         // check if native drag and drop support is there
-        if( detectedFeatures.userAgentSupportingNativeDnD
-            && detectedFeatures.draggable
-            && detectedFeatures.dragEvents ) {
-            // no polyfilling required
-            return false;
-        }
+        // if( detectedFeatures.userAgentSupportingNativeDnD
+        //     && detectedFeatures.draggable
+        //     && detectedFeatures.dragEvents ) {
+        //     // no polyfilling required
+        //     return false;
+        // }
     }
 
     console.log( "dnd-poly: Applying mobile drag and drop polyfill." );
@@ -223,8 +229,10 @@ export function polyfill( override?:Config ):boolean {
     if( config.holdToDrag ) {
         console.log("dnd-poly: holdToDrag set to " + config.holdToDrag);
         addDocumentListener( "touchstart", onDelayTouchstart, false );
+        addDocumentListener( "mousedown", onDelayTouchstart, false );
     } else {
         addDocumentListener( "touchstart", onTouchstart, false );
+        addDocumentListener( "mousedown", onDelayTouchstart, false );
     }
 
     return true;
